@@ -11,6 +11,27 @@ let currentConfig = null;
 
 const $ = (id) => document.getElementById(id);
 
+function handleAuthError(status) {
+    if (status === 401 || status === 302) {
+        window.location.href = '/frontend/login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return true;
+    }
+    return false;
+}
+
+const originalFetch = window.fetch;
+window.fetch = async function(...args) {
+    const res = await originalFetch.apply(this, args);
+    if (res.status === 401) {
+        const url = typeof args[0] === 'string' ? args[0] : args[0]?.url || '';
+        // Only redirect for our own API calls, not external
+        if (url.startsWith('/') || url.startsWith(window.location.origin)) {
+            handleAuthError(401);
+        }
+    }
+    return res;
+};
+
 function getCategoryCooldown(email, category, quotas) {
      const now = Date.now();
      const cliExpiry = globalCooldowns[`${email}|cli`];
@@ -690,6 +711,13 @@ async function resetAllAccounts() {
     }
 }
 
+async function logout() {
+    try {
+        await fetch('/auth/logout', { method: 'POST' });
+    } catch {}
+    window.location.href = '/frontend/login.html';
+}
+
 async function editProjectId(email, currentPid) {
     const newPid = prompt(`Enter new Project ID for ${email}:`, currentPid);
     if (newPid === null || newPid === currentPid) return;
@@ -860,6 +888,11 @@ function setupSSE() {
         const data = JSON.parse(e.data);
         addLog(data.message);
     });
+    es.onerror = () => {
+        // SSE will fail with a network error if server returned 401 redirect.
+        // Check auth status and redirect if needed.
+        fetch('/api/status').catch(() => {});
+    };
 }
 
 function initializeApp() {

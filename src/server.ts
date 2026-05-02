@@ -13,6 +13,7 @@ import { transformToGoogleBody, transformGoogleEventToOpenAI, createOpenAIStream
 import { getImpersonationHeaders, getGeminiCliHeaders, generateFingerprint } from "./utils/headers";
 import { refreshAllQuotas, fetchQuota, supportedModelsCache } from "./api/quota";
 import { parseGoogleError } from "./utils/errors";
+import { isAuthEnabled, hasDashboardAuth, hasApiAuth, apiUnauthorized, dashboardUnauthorized, validateCredentials, createSession, destroySession, getSessionCookie, setSessionCookieHeader, clearSessionCookieHeader } from "./auth/proxy-auth";
 
 const logBuffer: string[] = [];
 const MAX_LOGS = 200;
@@ -68,8 +69,68 @@ Bun.serve({
             }
         });
     }
+    // --- Auth routes (always accessible) ---
+    if (cleanPath === "/auth/login" && req.method === "POST") {
+      try {
+        const body = await req.json() as any;
+        const { username, password } = body;
+        if (!username || !password || !validateCredentials(username, password)) {
+          return new Response(JSON.stringify({ error: { message: "Invalid credentials" } }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        const token = createSession();
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Set-Cookie": setSessionCookieHeader(token),
+          },
+        });
+      } catch {
+        return new Response(JSON.stringify({ error: { message: "Invalid request body" } }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    if (cleanPath === "/auth/logout" && req.method === "POST") {
+      const token = getSessionCookie(req);
+      if (token) destroySession(token);
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: "/frontend/login.html",
+          "Set-Cookie": clearSessionCookieHeader(),
+        },
+      });
+    }
+
+    // --- Public routes (no auth required) ---
     if (cleanPath === "/oauth/start") {
       return Response.redirect(generateAuthUrl());
+    }
+
+    // --- Auth guards ---
+    if (isAuthEnabled()) {
+      const isOAuthCallback = cleanPath === "/oauth-callback";
+      const isLoginPage = cleanPath === "/frontend/login.html";
+      const isLoginAsset = cleanPath.startsWith("/frontend/js/tailwind-config.js") || cleanPath.startsWith("/frontend/css/");
+      const isPublicRoute = isOAuthCallback || isLoginPage || isLoginAsset;
+
+      if (!isPublicRoute) {
+        const isApiRoute = cleanPath.startsWith("/v1/") || cleanPath.startsWith("/api/");
+        const isDashboardRoute = cleanPath.startsWith("/frontend/") || cleanPath === "/";
+
+        if (isApiRoute && !hasApiAuth(req)) {
+          return apiUnauthorized();
+        }
+        if (isDashboardRoute && !hasDashboardAuth(req)) {
+          return dashboardUnauthorized();
+        }
+      }
     }
 
     if (cleanPath === "/v1/models") {
