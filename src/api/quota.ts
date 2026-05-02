@@ -11,7 +11,7 @@ export async function fetchQuota(account: AntigravityAccount, retry = true): Pro
   }
 
   try {
-    const res = await fetch(`https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels`, {
+    const res = await fetch(`https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota`, {
       method: "POST",
       headers: {
         ...getImpersonationHeaders(account.accessToken, account.fingerprint),
@@ -37,7 +37,8 @@ export async function fetchQuota(account: AntigravityAccount, retry = true): Pro
     }
 
     if (!res.ok) {
-        console.error(`Quota fetch failed for ${account.email}: ${res.status}`);
+        const body = await res.text();
+        console.error(`Quota fetch failed for ${account.email}: ${res.status} - ${body}`);
         return null;
     }
 
@@ -63,7 +64,13 @@ function getNextMidnightPT(): string {
 export const supportedModelsCache: Set<string> = new Set();
 
 function parseQuotaResponse(data: any): AntigravityAccount['quota'] | null {
-    // Handle both array and map formats
+    // Handle retrieveUserQuota response format: { buckets: [...] }
+    const buckets = data.buckets;
+    if (Array.isArray(buckets) && buckets.length > 0) {
+        return parseUserQuotaBuckets(buckets);
+    }
+
+    // Fallback: handle fetchAvailableModels response format
     let rawModels = data.availableModels || data.models || [];
     let entries: [string, any][] = [];
     if (!Array.isArray(rawModels) && typeof rawModels === 'object') {
@@ -171,6 +178,52 @@ function parseQuotaResponse(data: any): AntigravityAccount['quota'] | null {
     });
 
     // Sort by name for consistency
+    results.sort((a, b) => a.groupName.localeCompare(b.groupName));
+
+    return results.length > 0 ? results : null;
+}
+
+function parseUserQuotaBuckets(buckets: any[]): AntigravityAccount['quota'] | null {
+    // Group buckets by modelId (may have multiple tokenTypes per model)
+    const groups = new Map<string, any>();
+
+    for (const bucket of buckets) {
+        const modelId = bucket.modelId;
+        if (!modelId) continue;
+
+        // Add to supported models cache
+        supportedModelsCache.add(modelId);
+
+        // Only use REQUESTS type for quota display (skip INPUT_TOKENS etc.)
+        if (bucket.tokenType !== "REQUESTS") continue;
+
+        const remainingFraction = bucket.remainingFraction ?? 0;
+        let resetTime = bucket.resetTime;
+
+        if (!resetTime || resetTime === "1970-01-01T00:00:00Z") {
+            resetTime = getNextMidnightPT();
+        }
+
+        const diffMs = Math.max(0, new Date(resetTime).getTime() - Date.now());
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const resetIn = `${hours}h ${minutes}m`;
+        const pct = Math.round(remainingFraction * 100);
+        const quotaLeft = `${pct}%`;
+
+        groups.set(modelId, {
+            groupName: modelId,
+            limit: "Unknown",
+            usage: "Unknown",
+            limitName: modelId,
+            remainingFraction: remainingFraction,
+            resetTime: resetTime,
+            quotaLeft,
+            resetIn
+        });
+    }
+
+    const results = Array.from(groups.values());
     results.sort((a, b) => a.groupName.localeCompare(b.groupName));
 
     return results.length > 0 ? results : null;
