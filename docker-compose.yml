@@ -1,6 +1,9 @@
 services:
   proxy:
-    build: .
+    build:
+      context: .
+      args:
+        GIT_HASH: ${GIT_HASH:-dev}
     ports:
       - "${PORT:-3000}:3000"
     environment:

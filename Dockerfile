@@ -7,6 +7,9 @@ RUN bun install --frozen-lockfile --production
 FROM oven/bun:alpine
 WORKDIR /app
 
+ARG GIT_HASH=dev
+ENV GIT_HASH=${GIT_HASH}
+
 COPY --from=builder /app/node_modules ./node_modules
 COPY src ./src
 COPY package.json ./

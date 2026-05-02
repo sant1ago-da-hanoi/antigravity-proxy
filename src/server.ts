@@ -5,7 +5,7 @@ await loadProxyConfig();
 
 const pkg = await Bun.file("package.json").json();
 const APP_VERSION = pkg.version || "0.0.0";
-const GIT_HASH = await Bun.$`git rev-parse --short HEAD`.text().then(s => s.trim()).catch(() => "dev");
+const GIT_HASH = process.env.GIT_HASH || "dev";
 
 import { initManager, getBestAccount, updateAccountUsage, addAccount, getAccounts, removeAccount, getStrategy, setStrategy, saveAccounts, emitAccountFlash, eventBus, getEarliestReset, markCooldown, ensureFingerprint, regenerateFingerprint, getCooldowns, resetAccount, flagAccountChallenge, flagModelUnsupported, updateAccountProject, getFamilyName, resetAllCooldowns } from "./auth/manager";
 import { type SelectionStrategy, type AntigravityAccount } from "./auth/types";
