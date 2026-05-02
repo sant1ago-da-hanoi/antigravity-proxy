@@ -1,8 +1,8 @@
 import { type DeviceFingerprint } from "../auth/types";
 
 export const OAUTH_CONFIG = {
-  clientId: "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com",
-  clientSecret: "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",
+  clientId: process.env.OAUTH_CLIENT_ID || "",
+  clientSecret: process.env.OAUTH_CLIENT_SECRET || "",
   authUri: "https://accounts.google.com/o/oauth2/v2/auth",
   tokenUri: "https://oauth2.googleapis.com/token",
   scopes: [
@@ -12,7 +12,7 @@ export const OAUTH_CONFIG = {
     "https://www.googleapis.com/auth/cclog",
     "https://www.googleapis.com/auth/experimentsandconfigs"
   ],
-  redirectUri: "http://localhost:3000/oauth-callback"
+  redirectUri: process.env.BASE_URL ? `${process.env.BASE_URL}/oauth-callback` : "http://localhost:3000/oauth-callback"
 };
 
 const ANTIGRAVITY_VERSION = "1.15.8";
