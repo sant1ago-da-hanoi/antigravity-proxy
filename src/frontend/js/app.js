@@ -915,3 +915,16 @@ function initializeApp() {
 }
 
 window.initializeApp = initializeApp;
+window.logout = logout;
+window.cycleTheme = cycleTheme;
+window.openConfigModal = openConfigModal;
+window.closeConfigModal = closeConfigModal;
+window.saveConfig = saveConfig;
+window.toggleAllFamilies = toggleAllFamilies;
+window.toggleAccount = toggleAccount;
+window.deleteAccount = deleteAccount;
+window.resetAccountHealth = resetAccountHealth;
+window.resetAllAccounts = resetAllAccounts;
+window.editProjectId = editProjectId;
+window.redisoverProject = redisoverProject;
+window.toggleLogs = toggleLogs;
