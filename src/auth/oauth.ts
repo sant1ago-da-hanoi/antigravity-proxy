@@ -61,14 +61,19 @@ export async function getProjectId(accessToken: string): Promise<string> {
     try {
       const res = await fetch("https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist", {
         method: "POST",
-        headers: getImpersonationHeaders(accessToken),
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          "X-Goog-Api-Client": "google-cloud-sdk vscode/1.96.0",
+        },
         body: JSON.stringify({
           metadata: { ideType: ideType, platform: "PLATFORM_UNSPECIFIED", pluginType: "GEMINI" }
         })
       });
 
+      const body = await res.text();
       if (res.ok) {
-        const data = await res.json() as any;
+        const data = JSON.parse(body);
         const project = data?.cloudaicompanionProject;
         const projectId = typeof project === "string" ? project : project?.id;
         
@@ -76,6 +81,9 @@ export async function getProjectId(accessToken: string): Promise<string> {
           console.log(`[OAuth] Discovered Project ID using ${ideType}: ${projectId}`);
           return projectId;
         }
+        console.warn(`[OAuth] loadCodeAssist OK but no projectId in response (${ideType}):`, body.substring(0, 200));
+      } else {
+        console.warn(`[OAuth] loadCodeAssist failed (${ideType}): ${res.status} ${body.substring(0, 200)}`);
       }
     } catch (e) {
       console.warn(`[OAuth] Failed to fetch project ID with ${ideType}:`, e);
