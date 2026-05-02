@@ -1,8 +1,12 @@
 import { type DeviceFingerprint } from "../auth/types";
 
+// OAuth client from Google's Antigravity IDE (GCP project 1071006060591).
+// This is a public installed-app client — the secret is not confidential.
+// Claude/GPT models require this specific client; Google's Gemini CLI client
+// (681255809395) only provides Gemini models.
 export const OAUTH_CONFIG = {
-  clientId: process.env.OAUTH_CLIENT_ID || "",
-  clientSecret: process.env.OAUTH_CLIENT_SECRET || "",
+  clientId: process.env.OAUTH_CLIENT_ID || "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com",
+  clientSecret: process.env.OAUTH_CLIENT_SECRET || "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",
   authUri: "https://accounts.google.com/o/oauth2/v2/auth",
   tokenUri: "https://oauth2.googleapis.com/token",
   scopes: [
