@@ -11,6 +11,10 @@ services:
       - BASE_URL=${BASE_URL:-http://127.0.0.1:3000}
       - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
       - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
+      - PROXY_USERNAME=${PROXY_USERNAME}
+      - PROXY_PASSWORD=${PROXY_PASSWORD}
+      - PROXY_API_KEY=${PROXY_API_KEY}
+      - GIT_HASH=${GIT_HASH:-dev}
     volumes:
       - ./data:/app/data:z
     restart: unless-stopped
