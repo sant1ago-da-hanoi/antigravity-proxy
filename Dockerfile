@@ -14,8 +14,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY src ./src
 COPY package.json ./
 
-# Create a data directory for persistence and set permissions
-RUN mkdir -p /app/data && chown -R bun:bun /app/data
+# Create data directory and config.json with correct permissions
+RUN mkdir -p /app/data && echo '{}' > /app/config.json && chown -R bun:bun /app/data /app/config.json
 
 EXPOSE 3000
 
