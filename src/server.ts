@@ -5,6 +5,7 @@ await loadProxyConfig();
 
 const pkg = await Bun.file("package.json").json();
 const APP_VERSION = pkg.version || "0.0.0";
+const GIT_HASH = await Bun.$`git rev-parse --short HEAD`.text().then(s => s.trim()).catch(() => "dev");
 
 import { initManager, getBestAccount, updateAccountUsage, addAccount, getAccounts, removeAccount, getStrategy, setStrategy, saveAccounts, emitAccountFlash, eventBus, getEarliestReset, markCooldown, ensureFingerprint, regenerateFingerprint, getCooldowns, resetAccount, flagAccountChallenge, flagModelUnsupported, updateAccountProject, getFamilyName, resetAllCooldowns } from "./auth/manager";
 import { type SelectionStrategy, type AntigravityAccount } from "./auth/types";
@@ -743,17 +744,24 @@ Bun.serve({
       }
     }
 
-    if (url.pathname.startsWith("/frontend/")) {
-        const path = url.pathname.replace("/frontend/", "");
-        try {
-            const file = Bun.file(`${import.meta.dir}/frontend/${path}`);
-            return new Response(file, {
-                headers: { "Cache-Control": "no-cache, must-revalidate" },
-            });
-        } catch {
-            return new Response("Not Found", { status: 404 });
-        }
-    }
+     if (url.pathname.startsWith("/frontend/")) {
+         const path = url.pathname.replace("/frontend/", "");
+         try {
+             const file = Bun.file(`${import.meta.dir}/frontend/${path}`);
+             if (path.endsWith(".html")) {
+                 let html = await file.text();
+                 html = html.replace(/(\.js|\.css)(")/g, `$1?v=${GIT_HASH}$2`);
+                 return new Response(html, {
+                     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache, must-revalidate" },
+                 });
+             }
+             return new Response(file, {
+                 headers: { "Cache-Control": "public, max-age=31536000, immutable" },
+             });
+         } catch {
+             return new Response("Not Found", { status: 404 });
+         }
+     }
     
     if (url.pathname === "/") {
         return Response.redirect("/frontend/index.html");
