@@ -12,7 +12,8 @@ export const OAUTH_CONFIG = {
     "https://www.googleapis.com/auth/cclog",
     "https://www.googleapis.com/auth/experimentsandconfigs"
   ],
-  redirectUri: process.env.BASE_URL ? `${process.env.BASE_URL}/oauth-callback` : "http://localhost:3000/oauth-callback"
+  // Must use loopback for Google's installed app OAuth client
+  redirectUri: "http://127.0.0.1:3000/oauth-callback"
 };
 
 const ANTIGRAVITY_VERSION = "1.15.8";
