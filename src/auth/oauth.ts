@@ -61,11 +61,7 @@ export async function getProjectId(accessToken: string): Promise<string> {
     try {
       const res = await fetch("https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist", {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-          "X-Goog-Api-Client": "google-cloud-sdk vscode/1.96.0",
-        },
+        headers: getImpersonationHeaders(accessToken),
         body: JSON.stringify({
           metadata: { ideType: ideType, platform: "PLATFORM_UNSPECIFIED", pluginType: "GEMINI" }
         })

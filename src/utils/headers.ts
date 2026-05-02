@@ -12,7 +12,9 @@ export const OAUTH_CONFIG = {
   scopes: [
     "https://www.googleapis.com/auth/cloud-platform",
     "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/userinfo.profile"
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "https://www.googleapis.com/auth/cclog",
+    "https://www.googleapis.com/auth/experimentsandconfigs"
   ],
   // Must use loopback for Google's installed app OAuth client
   redirectUri: "http://127.0.0.1:3000/oauth-callback"
