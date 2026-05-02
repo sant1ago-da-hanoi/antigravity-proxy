@@ -14,8 +14,9 @@ export async function fetchQuota(account: AntigravityAccount, retry = true): Pro
     const res = await fetch(`https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota`, {
       method: "POST",
       headers: {
-        ...getImpersonationHeaders(account.accessToken, account.fingerprint),
-        "User-Agent": "antigravity",
+        "Authorization": `Bearer ${account.accessToken}`,
+        "Content-Type": "application/json",
+        "X-Goog-Api-Client": "google-cloud-sdk vscode/1.96.0",
       },
       body: JSON.stringify({
         project: account.projectId
