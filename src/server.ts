@@ -747,7 +747,9 @@ Bun.serve({
         const path = url.pathname.replace("/frontend/", "");
         try {
             const file = Bun.file(`${import.meta.dir}/frontend/${path}`);
-            return new Response(file);
+            return new Response(file, {
+                headers: { "Cache-Control": "no-cache, must-revalidate" },
+            });
         } catch {
             return new Response("Not Found", { status: 404 });
         }
