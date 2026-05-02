@@ -77,7 +77,7 @@ export async function getProjectId(accessToken: string): Promise<string> {
           console.log(`[OAuth] Discovered Project ID using ${ideType}: ${projectId}`);
           return projectId;
         }
-        console.warn(`[OAuth] loadCodeAssist OK but no projectId in response (${ideType}):`, body.substring(0, 200));
+        console.warn(`[OAuth] loadCodeAssist OK but no projectId in response (${ideType}):`, body.substring(0, 2000));
       } else {
         console.warn(`[OAuth] loadCodeAssist failed (${ideType}): ${res.status} ${body.substring(0, 200)}`);
       }
